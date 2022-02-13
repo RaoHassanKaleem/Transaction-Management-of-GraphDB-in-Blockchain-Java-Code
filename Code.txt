@@ -1,0 +1,38 @@
+// Neo4j Driver configurations with credentials.
+let driver = neo4j.v1.driver("bolt://localhost",  neo4j.v1.auth.basic("neo4j", "neo4j"), { encrypted:false });
+let session = driver.session();
+
+// Run the specific statements in a transaction.
+let tx = session.beginTransaction();
+tx.run("MERGE (tom:Person {name : {nameParam} }) RETURN tom.name AS name", {nameParam: 'Tom'})
+  .subscribe({
+    onNext: function (record) {
+      console.log(record.get('name'));
+    },
+    onCompleted: function () {
+      console.log('Statement completed.')
+    },
+    onError: function (error) {
+      console.log(error);
+    }
+  });
+
+// Then decide whether transaction should be committed or not.
+let success = true;
+
+if (success) {
+  tx.commit()
+    .subscribe({
+      onCompleted: function () {
+        // This transaction is now committed 
+      },
+      onError: function (error) {
+        console.log(error);
+      }
+    });
+} else {
+  // Transaction is rolled black and nothing is created in the database.
+  console.log('Transaction rolled back.');
+  tx.rollback();
+}
+session.close();
